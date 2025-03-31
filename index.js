@@ -1,4 +1,3 @@
-const { loadimage } = require("../gerg"); // import the bot
 const Discord = require("discord.js"); // discord.js!
 require("dotenv").config(); // get the config file
 const fs = require("node:fs"); // filesystem access

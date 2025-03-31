@@ -1,0 +1,28 @@
+{
+  "name": "gergbot",
+  "version": "1.0.0",
+  "description": "A multi-functional bot for YouTube Draws related servers.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "bot": "node deploy; node ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/meowguard/GergBot.git"
+  },
+  "author": "Tomcat",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/meowguard/GergBot/issues"
+  },
+  "homepage": "https://github.com/meowguard/GergBot#readme",
+  "dependencies": {
+    "@napi-rs/canvas": "^0.1.68",
+    "discord.js": "^14.18.0",
+    "dotenv": "^16.4.7",
+    "path": "^0.12.7",
+    "request": "^2.88.2",
+    "ws": "^8.18.1"
+  }
+}
