@@ -1,9 +1,0 @@
-{
-  // Remove comments before using
-  "12341234": {
-    // Replace this with the role ID you want to use
-    "name": "Default", // Replace this with the name of the role that you want to show up
-    "color": "&f", // Replace this with the color code you want
-    "send_next": false // Set this to true if you want the next role to be displayed as well (up to 2)
-  }
-}
