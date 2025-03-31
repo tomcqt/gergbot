@@ -404,6 +404,26 @@ client.on(Discord.Events.MessageCreate, async (message) => {
   // Ignore messages from the bot itself
   if (message.author.bot) return;
 
+  // Check if the bot is mentioned
+  if (message.mentions.has(client.user)) {
+    try {
+      const meowCommand = client.commands.get("meow");
+      if (meowCommand) {
+        // Simulate interaction for the /meow command
+        await meowCommand.execute({
+          reply: async (response) => {
+            await message.reply({
+              content: response,
+              allowedMentions: { parse: [] }, // Disable pings
+            });
+          },
+        });
+      }
+    } catch (error) {
+      console.error("Failed to execute /meow command on mention:", error);
+    }
+  }
+
   // Specify the channel ID to listen for messages
   const forwardingChannelId = process.env.FORWARDING_CHANNEL_ID; // Replace with your Discord channel ID
 
