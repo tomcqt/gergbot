@@ -20,8 +20,41 @@ const client = new Discord.Client({
 
 let connectedws = 0; // amount of connected websockets
 
+async function setRandomProfilePicture() {
+  try {
+    const pfpsPath = path.join(__dirname, "pfps");
+    const files = fs
+      .readdirSync(pfpsPath)
+      .filter((file) => file.endsWith(".png"));
+
+    if (files.length === 0) {
+      console.error("No PNG files found in the pfps folder.");
+      return;
+    }
+
+    const randomFile = files[Math.floor(Math.random() * files.length)];
+    const filePath = path.join(pfpsPath, randomFile);
+
+    await client.user.setAvatar(filePath);
+    console.log(`Profile picture updated to: ${randomFile}`);
+
+    const channelId = process.env.STATUS_CHANNEL_ID; // Replace with your Discord channel ID
+    const channel = await client.channels.fetch(channelId);
+
+    channel.send("Updated profile picture!");
+  } catch (error) {
+    console.error("Failed to update profile picture:", error);
+  }
+}
+
 client.on("ready", async () => {
   console.log(`Logged in as ${client.user.tag}!`);
+
+  // Set a random profile picture on startup
+  await setRandomProfilePicture();
+
+  // Schedule profile picture updates every 30 minutes
+  setInterval(setRandomProfilePicture, 30 * 60 * 1000);
 
   const channelId = process.env.STATUS_CHANNEL_ID; // Replace with your Discord channel ID
   const channel = await client.channels.fetch(channelId);
