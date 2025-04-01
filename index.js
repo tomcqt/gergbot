@@ -8,8 +8,6 @@ const request = require("request"); // request for downloading files
 
 const Intents = Discord.GatewayIntentBits;
 
-const linkCommands = ["discord"];
-
 //add stuff here tomcat
 
 // LATER: /get: prints the image of the site, by converting thumb into image
@@ -26,6 +24,7 @@ const client = new Discord.Client({
 });
 
 let connectedws = 0; // amount of connected websockets
+let usernameSet = false; // Flag to track if the username has been set
 
 async function setRandomProfilePicture() {
   try {
@@ -188,7 +187,8 @@ client.on(Discord.Events.InteractionCreate, async (interaction) => {
 });
 
 function setstatusbasedonws() {
-  while (true) {
+  try {
+    connectedws = (ws.readyState == 1 ? 1 : 0) + (ssws.readyState == 1 ? 1 : 0);
     if (connectedws == 0) {
       client.user.setPresence({
         activities: [
@@ -199,7 +199,6 @@ function setstatusbasedonws() {
         ],
         status: Discord.PresenceUpdateStatus.DoNotDisturb,
       });
-      break;
     } else if (connectedws == 1) {
       client.user.setPresence({
         activities: [
@@ -210,7 +209,6 @@ function setstatusbasedonws() {
         ],
         status: Discord.PresenceUpdateStatus.Idle,
       });
-      break;
     } else if (connectedws == 2) {
       client.user.setPresence({
         activities: [
@@ -221,21 +219,10 @@ function setstatusbasedonws() {
         ],
         status: Discord.PresenceUpdateStatus.Online,
       });
-      break;
-    } else {
-      connectedws =
-        (ws.readyState == 1 ? 1 : 0) + (ssws.readyState == 1 ? 1 : 0);
-      client.user.setPresence({
-        activities: [
-          {
-            name: "over Youtube Draws",
-            type: Discord.ActivityType.Watching,
-          },
-        ],
-        status: Discord.PresenceUpdateStatus.Invisible,
-      });
     }
     console.log("Set status to " + connectedws);
+  } catch (err) {
+    console.log("Failed to set status.\n" + err);
   }
 }
 
@@ -243,107 +230,7 @@ function setstatusbasedonws() {
 let ip = Math.floor(Math.random() * 1000); // random ip to reduce spam when logging in
 var ws;
 
-function reconnectWebSocket() {
-  console.log("Reconnecting WebSocket...");
-  ws = new WebSocket(process.env.FORWARDING_WEBSOCKET_URL, {
-    headers: {
-      "X-Forwarded-For": ip,
-      "X-Real-Ip": ip,
-      Ip: ip,
-    },
-  });
-
-  ws.on("open", async () => {
-    connectedws++;
-    setstatusbasedonws();
-
-    console.log("WebSocket connection re-established.");
-
-    const channelId = process.env.STATUS_CHANNEL_ID; // Replace with your Discord channel ID
-    const channel = await client.channels.fetch(channelId);
-    channel.send("Chat websocket reconnected.");
-  });
-
-  ws.on("message", async (data) => {
-    console.log("WebSocket message received:", data);
-
-    try {
-      // Parse the incoming data as JSON
-      const parsedData = JSON.parse(data);
-
-      // Check if the message type is "chat_message"
-      if (
-        parsedData.type === "chat_message" &&
-        parsedData.username !== process.env.FORWARDING_USERNAME
-      ) {
-        // Remove color codes (e.g., &l, &b, &d, etc.) from the username
-        const cleanedUsername = parsedData.username.replace(/&[a-z0-9]/gi, "");
-
-        // Remove color codes from the message
-        parsedData.message = parsedData.message.replace(/&[a-z0-9]/gi, "");
-
-        // Remove @ pings from the message
-        parsedData.message = parsedData.message.replace(/@/g, "\\@");
-
-        // Add a backslash before Discord formatting characters
-        parsedData.message = parsedData.message.replace(/([_*~`])/g, "\\$1");
-
-        // Construct the cleaned message
-        const cleanedMessage = `${cleanedUsername}: ${parsedData.message}`;
-
-        // Send the cleaned message to a specific Discord channel
-        const channelId = process.env.FORWARDING_CHANNEL_ID; // Replace with your Discord channel ID
-        const channel = await client.channels.fetch(channelId);
-
-        if (channel && channel.isTextBased()) {
-          channel.send(cleanedMessage);
-        } else {
-          console.error("Failed to fetch the channel or send a message.");
-        }
-      } else if (parsedData.type === "system_message") {
-        console.log("System message received:", parsedData.message);
-        // Handle system messages if needed
-        const channelId = process.env.FORWARDING_CHANNEL_ID; // Replace with your Discord channel ID
-        const channel = await client.channels.fetch(channelId);
-        parsedData.message = parsedData.message.replace(/&[a-z0-9]/gi, "");
-        channel.send("**" + parsedData.message + "**"); // send system message and make it bold
-      } else if (parsedData.type === "change_username") {
-        console.log("Setting username...");
-        const username = process.env.FORWARDING_USERNAME; // Replace with your desired username
-        const payload = JSON.stringify({
-          type: "change_username",
-          username: username,
-        });
-        ws.send(JSON.stringify(payload));
-        console.log("Username set:", username);
-      } else {
-        console.log("Unhandled message type:", parsedData.type);
-      }
-    } catch (error) {
-      console.error("Failed to process WebSocket message:", error);
-    }
-  });
-
-  ws.on("error", (error) => {
-    console.error("WebSocket error:", error);
-  });
-
-  ws.on("close", async () => {
-    connectedws--;
-    setstatusbasedonws();
-    console.log("WebSocket connection closed. Attempting to reconnect...");
-
-    const channelId = process.env.STATUS_CHANNEL_ID; // Replace with your Discord channel ID
-    const channel = await client.channels.fetch(channelId);
-    if (channel && channel.isTextBased()) {
-      channel.send("Chat websocket disconnected.");
-    }
-
-    setTimeout(reconnectWebSocket, 5000); // Adjust the delay as needed
-  });
-}
-
-client.once(Discord.Events.ClientReady, () => {
+function connectWebSocket() {
   ws = new WebSocket(process.env.FORWARDING_WEBSOCKET_URL, {
     headers: {
       // secret sauce
@@ -373,16 +260,12 @@ client.once(Discord.Events.ClientReady, () => {
       // Parse the incoming data as JSON
       const parsedData = JSON.parse(data);
 
-      // Check if the message type is "chat_message"
       if (
         parsedData.type === "chat_message" &&
-        parsedData.username !== process.env.FORWARDING_USERNAME
+        parsedData.username !== process.env.FORWARDING_USERNAME &&
+        usernameSet
       ) {
-        if (
-          !linkCommands.includes(
-            process.env.NON_DISCORD_COMMAND_PREFIX + parsedData.message
-          )
-        ) {
+        if (!parsedData.message.startsWith("!")) {
           // Remove color codes (e.g., &l, &b, &d, etc.) from the username
           const cleanedUsername = parsedData.username.replace(
             /&[a-z0-9]/gi,
@@ -411,6 +294,7 @@ client.once(Discord.Events.ClientReady, () => {
             console.error("Failed to fetch the channel or send a message.");
           }
         } else {
+          console.log("Command found!");
           payload = {};
           if (
             parsedData.message ==
@@ -427,11 +311,13 @@ client.once(Discord.Events.ClientReady, () => {
             };
           }
           try {
-            ws.send(payload);
+            ws.send(JSON.stringify(payload));
           } catch (err) {
-            console.log("An error occurred trying to run a command.");
+            console.log("An error occurred trying to run a command.\n" + err);
           }
         }
+      } else if (parsedData.type === "chat_message" && !usernameSet) {
+        console.log("Message withheld because username is not set.");
       } else if (parsedData.type === "system_message") {
         console.log("System message received:", parsedData.message);
         // Handle system messages if needed
@@ -448,6 +334,7 @@ client.once(Discord.Events.ClientReady, () => {
         });
         ws.send(payload);
         console.log("Username set:", username);
+        usernameSet = true;
       } else {
         console.log("Unhandled message type:", parsedData.type);
       }
@@ -473,8 +360,12 @@ client.once(Discord.Events.ClientReady, () => {
       channel.send("Chat websocket disconnected.");
     }
 
-    setTimeout(reconnectWebSocket, 5000); // Adjust the delay as needed
+    setTimeout(connectWebSocket, 5000); // Adjust the delay as needed
   });
+}
+
+client.once(Discord.Events.ClientReady, () => {
+  connectWebSocket();
 });
 
 client.on(Discord.Events.MessageCreate, async (message) => {
@@ -630,7 +521,7 @@ function renderCanvas() {
   return buffer;
 }
 
-function connectWebSocket() {
+function connectSnapShotWebSocket() {
   ssws = new WebSocket(uri);
   ssws.binaryType = "arraybuffer";
 
@@ -657,7 +548,7 @@ function connectWebSocket() {
       channel.send("Snapshot websocket disconnected.");
     }
 
-    setTimeout(connectWebSocket, 1500); // Reconnect after a delay
+    setTimeout(connectSnapShotWebSocket, 1500); // Reconnect after a delay
   });
 
   ssws.on("error", (error) => {
@@ -689,7 +580,7 @@ function connectWebSocket() {
 
 client.once(Discord.Events.ClientReady, () => {
   console.log("Connecting to WebSocket...");
-  connectWebSocket();
+  connectSnapShotWebSocket();
   console.log("WebSocket connected.");
 });
 
