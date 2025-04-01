@@ -376,29 +376,52 @@ client.once(Discord.Events.ClientReady, () => {
         parsedData.type === "chat_message" &&
         parsedData.username !== process.env.FORWARDING_USERNAME
       ) {
-        // Remove color codes (e.g., &l, &b, &d, etc.) from the username
-        const cleanedUsername = parsedData.username.replace(/&[a-z0-9]/gi, "");
+        if (!linkCommands.includes(parsedData.message)) {
+          // Remove color codes (e.g., &l, &b, &d, etc.) from the username
+          const cleanedUsername = parsedData.username.replace(
+            /&[a-z0-9]/gi,
+            ""
+          );
 
-        // Remove color codes from the message
-        parsedData.message = parsedData.message.replace(/&[a-z0-9]/gi, "");
+          // Remove color codes from the message
+          parsedData.message = parsedData.message.replace(/&[a-z0-9]/gi, "");
 
-        // Remove @ pings from the message
-        parsedData.message = parsedData.message.replace(/@/g, "@​");
+          // Remove @ pings from the message
+          parsedData.message = parsedData.message.replace(/@/g, "@​");
 
-        // Add a backslash before Discord formatting characters
-        parsedData.message = parsedData.message.replace(/([_*~`])/g, "\\$1");
+          // Add a backslash before Discord formatting characters
+          parsedData.message = parsedData.message.replace(/([_*~`])/g, "\\$1");
 
-        // Construct the cleaned message
-        const cleanedMessage = `${cleanedUsername}: ${parsedData.message}`;
+          // Construct the cleaned message
+          const cleanedMessage = `${cleanedUsername}: ${parsedData.message}`;
 
-        // Send the cleaned message to a specific Discord channel
-        const channelId = process.env.FORWARDING_CHANNEL_ID; // Replace with your Discord channel ID
-        const channel = await client.channels.fetch(channelId);
+          // Send the cleaned message to a specific Discord channel
+          const channelId = process.env.FORWARDING_CHANNEL_ID; // Replace with your Discord channel ID
+          const channel = await client.channels.fetch(channelId);
 
-        if (channel && channel.isTextBased()) {
-          channel.send(cleanedMessage);
+          if (channel && channel.isTextBased()) {
+            channel.send(cleanedMessage);
+          } else {
+            console.error("Failed to fetch the channel or send a message.");
+          }
         } else {
-          console.error("Failed to fetch the channel or send a message.");
+          payload = {};
+          if (parsedData.message == process.env.PREFIX + "discord") {
+            payload = {
+              type: "chat_message",
+              message: process.env.GUILD_LINK,
+            };
+          } else {
+            payload = {
+              type: "chat_message",
+              message: "That command does not exist!",
+            };
+          }
+          try {
+            ws.send(payload);
+          } catch (err) {
+            console.log("An error occurred trying to run a command.");
+          }
         }
       } else if (parsedData.type === "system_message") {
         console.log("System message received:", parsedData.message);
