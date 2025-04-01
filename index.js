@@ -314,7 +314,7 @@ function reconnectWebSocket() {
           type: "change_username",
           username: username,
         });
-        ws.send(payload);
+        ws.send(JSON.stringify(payload));
         console.log("Username set:", username);
       } else {
         console.log("Unhandled message type:", parsedData.type);
