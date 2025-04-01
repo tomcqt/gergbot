@@ -14,6 +14,11 @@ const Intents = Discord.GatewayIntentBits;
 // /set image ox oy: sets the image to print
 // LATER: /images: prints the list of valid images, with fs.readDirSync?
 
+function splitStringIntoChunks(str, chunkSize) {
+  const regex = new RegExp(`.{1,${chunkSize}}`, "g");
+  return str.match(regex);
+}
+
 const client = new Discord.Client({
   intents: [Intents.Guilds, Intents.GuildMessages, Intents.MessageContent],
 });
@@ -181,48 +186,55 @@ client.on(Discord.Events.InteractionCreate, async (interaction) => {
 });
 
 function setstatusbasedonws() {
-  if (connectedws == 0) {
-    client.user.setPresence({
-      activities: [
-        {
-          name: "over Youtube Draws",
-          type: Discord.ActivityType.Watching,
-        },
-      ],
-      status: Discord.PresenceUpdateStatus.DoNotDisturb,
-    });
-  } else if (connectedws == 1) {
-    client.user.setPresence({
-      activities: [
-        {
-          name: "over Youtube Draws",
-          type: Discord.ActivityType.Watching,
-        },
-      ],
-      status: Discord.PresenceUpdateStatus.Idle,
-    });
-  } else if (connectedws == 2) {
-    client.user.setPresence({
-      activities: [
-        {
-          name: "over Youtube Draws",
-          type: Discord.ActivityType.Watching,
-        },
-      ],
-      status: Discord.PresenceUpdateStatus.Online,
-    });
-  } else {
-    client.user.setPresence({
-      activities: [
-        {
-          name: "over Youtube Draws",
-          type: Discord.ActivityType.Watching,
-        },
-      ],
-      status: Discord.PresenceUpdateStatus.Invisible,
-    });
+  while (True) {
+    if (connectedws == 0) {
+      client.user.setPresence({
+        activities: [
+          {
+            name: "over Youtube Draws",
+            type: Discord.ActivityType.Watching,
+          },
+        ],
+        status: Discord.PresenceUpdateStatus.DoNotDisturb,
+      });
+      break;
+    } else if (connectedws == 1) {
+      client.user.setPresence({
+        activities: [
+          {
+            name: "over Youtube Draws",
+            type: Discord.ActivityType.Watching,
+          },
+        ],
+        status: Discord.PresenceUpdateStatus.Idle,
+      });
+      break;
+    } else if (connectedws == 2) {
+      client.user.setPresence({
+        activities: [
+          {
+            name: "over Youtube Draws",
+            type: Discord.ActivityType.Watching,
+          },
+        ],
+        status: Discord.PresenceUpdateStatus.Online,
+      });
+      break;
+    } else {
+      connectedws =
+        (ws.readyState == 1 ? 1 : 0) + (ssws.readyState == 1 ? 1 : 0);
+      client.user.setPresence({
+        activities: [
+          {
+            name: "over Youtube Draws",
+            type: Discord.ActivityType.Watching,
+          },
+        ],
+        status: Discord.PresenceUpdateStatus.Invisible,
+      });
+    }
+    console.log("Set status to " + connectedws);
   }
-  console.log("Set status to " + connectedws);
 }
 
 // chat forwarding
@@ -371,7 +383,7 @@ client.once(Discord.Events.ClientReady, () => {
         parsedData.message = parsedData.message.replace(/&[a-z0-9]/gi, "");
 
         // Remove @ pings from the message
-        parsedData.message = parsedData.message.replace(/@/g, "\\@");
+        parsedData.message = parsedData.message.replace(/@/g, "@​");
 
         // Add a backslash before Discord formatting characters
         parsedData.message = parsedData.message.replace(/([_*~`])/g, "\\$1");
@@ -504,14 +516,24 @@ client.on(Discord.Events.MessageCreate, async (message) => {
 
       messageContent += message.member.displayName + "&r: " + message.content;
 
-      // Forward the message content to the WebSocket server
-      const payload = JSON.stringify({
-        type: "chat_message",
-        message: messageContent,
+      // Split up the message
+      messageContent = splitStringIntoChunks(messageContent, 98);
+      messageContent.forEach((i, j) => {
+        if (j !== 0) {
+          messageContent[j] = "&f" + i;
+        }
       });
 
-      ws.send(payload); // Send the message to the WebSocket server
-      console.log("Message forwarded to WebSocket:", payload);
+      // Forward the message content to the WebSocket server
+      messageContent.forEach((i) => {
+        const payload = JSON.stringify({
+          type: "chat_message",
+          message: i,
+        });
+
+        ws.send(payload); // Send the message to the WebSocket server
+        console.log("Message forwarded to WebSocket:", payload);
+      });
 
       // Add check mark reaction to the message
       await message.react("✅");
