@@ -242,7 +242,7 @@ function connectWebSocket() {
 
   // Handle WebSocket connection open
   ws.on("open", async () => {
-    connectedws++;
+    // connectedws++;
     setstatusbasedonws();
 
     console.log("WebSocket connection established.");
@@ -350,7 +350,7 @@ function connectWebSocket() {
 
   // Handle WebSocket close
   ws.on("close", async () => {
-    connectedws--;
+    // connectedws--;
     setstatusbasedonws();
     console.log("WebSocket connection closed. Attempting to reconnect...");
 
@@ -526,7 +526,7 @@ function connectSnapShotWebSocket() {
   ssws.binaryType = "arraybuffer";
 
   ssws.on("open", async () => {
-    connectedws++;
+    // connectedws++;
     setstatusbasedonws();
 
     console.log(`Snapshot Websocket Connected`);
@@ -537,7 +537,7 @@ function connectSnapShotWebSocket() {
   });
 
   ssws.on("close", async () => {
-    connectedws--;
+    // connectedws--;
     setstatusbasedonws();
 
     console.log(`Snapshot WebSocket Disconnected, Reconnecting...`);
