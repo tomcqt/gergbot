@@ -412,7 +412,7 @@ client.once(Discord.Events.ClientReady, () => {
           ) {
             payload = {
               type: "chat_message",
-              message: process.env.GUILD_LINK,
+              message: process.env.DISCORD_LINK,
             };
           } else {
             payload = {
