@@ -406,7 +406,10 @@ client.once(Discord.Events.ClientReady, () => {
           }
         } else {
           payload = {};
-          if (parsedData.message == process.env.PREFIX + "discord") {
+          if (
+            parsedData.message ==
+            process.env.NON_DISCORD_COMMAND_PREFIX + "discord"
+          ) {
             payload = {
               type: "chat_message",
               message: process.env.GUILD_LINK,
