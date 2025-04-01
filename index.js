@@ -186,7 +186,7 @@ client.on(Discord.Events.InteractionCreate, async (interaction) => {
 });
 
 function setstatusbasedonws() {
-  while (True) {
+  while (true) {
     if (connectedws == 0) {
       client.user.setPresence({
         activities: [
