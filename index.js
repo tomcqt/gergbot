@@ -8,6 +8,8 @@ const request = require("request"); // request for downloading files
 
 const Intents = Discord.GatewayIntentBits;
 
+const linkCommands = ["discord"];
+
 //add stuff here tomcat
 
 // LATER: /get: prints the image of the site, by converting thumb into image
