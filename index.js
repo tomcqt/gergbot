@@ -378,7 +378,11 @@ client.once(Discord.Events.ClientReady, () => {
         parsedData.type === "chat_message" &&
         parsedData.username !== process.env.FORWARDING_USERNAME
       ) {
-        if (!linkCommands.includes(parsedData.message)) {
+        if (
+          !linkCommands.includes(
+            process.env.NON_DISCORD_COMMAND_PREFIX + parsedData.message
+          )
+        ) {
           // Remove color codes (e.g., &l, &b, &d, etc.) from the username
           const cleanedUsername = parsedData.username.replace(
             /&[a-z0-9]/gi,
