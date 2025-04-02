@@ -134,7 +134,7 @@ client.on(Discord.Events.InteractionCreate, async (interaction) => {
     try {
       buffer = renderCanvas();
       const file = new Discord.AttachmentBuilder(buffer);
-      if (command.channelId == process.env.BOT_COMMANDS_CHANNEL_ID) {
+      if (interaction.channel.id == process.env.BOT_COMMANDS_CHANNEL_ID) {
         await interaction.reply({
           content: "Snapshot succeeded!",
           files: [file],
@@ -145,7 +145,7 @@ client.on(Discord.Events.InteractionCreate, async (interaction) => {
           process.env.BOT_COMMANDS_CHANNEL_ID
         );
         botCommands.send({
-          content: `<@${command.user.id}> Snapshot succeeded!\n-# Please use this channel for snapshots in the future.`,
+          content: `<@${interaction.user.id}> Snapshot succeeded!\n-# Please use this channel for snapshots in the future.`,
           files: [file],
         });
       }
