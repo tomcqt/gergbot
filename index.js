@@ -148,6 +148,10 @@ client.on(Discord.Events.InteractionCreate, async (interaction) => {
           content: `<@${interaction.user.id}> Snapshot succeeded!\n-# Please use this channel for snapshots in the future.`,
           files: [file],
         });
+        await interaction.reply({
+          content: `Please use <#${process.env.BOT_COMMANDS_CHANNEL_ID}> in the future.`,
+          flags: Discord.MessageFlags.Ephemeral,
+        });
       }
     } catch (error) {
       console.error(error);
