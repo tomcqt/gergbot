@@ -145,7 +145,7 @@ client.on(Discord.Events.InteractionCreate, async (interaction) => {
           process.env.BOT_COMMANDS_CHANNEL_ID
         );
         botCommands.send({
-          content: `<@${command.author.id}> Snapshot succeeded!\n-# Please use this channel for snapshots in the future.`,
+          content: `<@${command.user.id}> Snapshot succeeded!\n-# Please use this channel for snapshots in the future.`,
           files: [file],
         });
       }
