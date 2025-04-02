@@ -8,12 +8,6 @@ const request = require("request"); // request for downloading files
 
 const Intents = Discord.GatewayIntentBits;
 
-//add stuff here tomcat
-
-// LATER: /get: prints the image of the site, by converting thumb into image
-// /set image ox oy: sets the image to print
-// LATER: /images: prints the list of valid images, with fs.readDirSync?
-
 function splitStringIntoChunks(str, chunkSize) {
   const regex = new RegExp(`.{1,${chunkSize}}`, "g");
   return str.match(regex);
@@ -67,15 +61,7 @@ client.on("ready", async () => {
   channel.send("GergBot is online!");
 
   // set user presence
-  client.user.setPresence({
-    activities: [
-      {
-        name: "over Youtube Draws",
-        type: Discord.ActivityType.Watching,
-      },
-    ],
-    status: Discord.PresenceUpdateStatus.Online,
-  });
+  setstatusbasedonws();
 
   // Auto-update server icon every 10 minutes
   setInterval(async () => {
@@ -148,10 +134,21 @@ client.on(Discord.Events.InteractionCreate, async (interaction) => {
     try {
       buffer = renderCanvas();
       const file = new Discord.AttachmentBuilder(buffer);
-      await interaction.reply({
-        content: "Snapshot succeeded!",
-        files: [file],
-      });
+      if (command.channelId == process.env.BOT_COMMANDS_CHANNEL_ID) {
+        await interaction.reply({
+          content: "Snapshot succeeded!",
+          files: [file],
+        });
+      } else {
+        // send it in the bot commands channel if it isnt already
+        const botCommands = await client.channels.fetch(
+          process.env.BOT_COMMANDS_CHANNEL_ID
+        );
+        botCommands.send({
+          content: `<@${command.author.id}> Snapshot succeeded!\n-# Please use this channel for snapshots in the future.`,
+          files: [file],
+        });
+      }
     } catch (error) {
       console.error(error);
       if (interaction.replied || interaction.deferred) {
@@ -231,6 +228,8 @@ let ip = Math.floor(Math.random() * 1000); // random ip to reduce spam when logg
 var ws;
 
 function connectWebSocket() {
+  usernameSet = false;
+
   ws = new WebSocket(process.env.FORWARDING_WEBSOCKET_URL, {
     headers: {
       // secret sauce
