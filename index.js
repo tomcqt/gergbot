@@ -411,14 +411,19 @@ client.on(Discord.Events.MessageCreate, async (message) => {
         roles.push(rolesData[topRole.id.toString()]);
       }
 
-      // Also add the next role if the include next flag is set to true
-      if (rolesData[topRole.id.toString()].send_next) {
+      // Recursively add roles below the top role if the include next flag is set to true
+      let currentRole = topRole;
+      while (rolesData[currentRole.id.toString()]?.send_next) {
         const nextRole = message.member.roles.cache
-          .filter((role) => role.position < topRole.position)
+          .filter((role) => role.position < currentRole.position)
           .sort((a, b) => b.position - a.position)
           .first();
-        if (nextRole) {
+
+        if (nextRole && rolesData[nextRole.id]) {
           roles.push(rolesData[nextRole.id]);
+          currentRole = nextRole;
+        } else {
+          break;
         }
       }
 
