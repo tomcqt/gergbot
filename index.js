@@ -159,8 +159,6 @@ client.on("ready", async () => {
     }
   }, 10 * 60 * 1000); // 10 minutes in milliseconds
 
-  client.commands = new Discord.Collection();
-
   const foldersPath = path.join(__dirname, "commands");
   const commandFolders = fs.readdirSync(foldersPath);
 
