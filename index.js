@@ -23,6 +23,7 @@ client.commands = new Discord.Collection();
 let connectedws = 0; // amount of connected websockets
 let usernameSet = false; // Flag to track if the username has been set
 let autoUpdateIcon = true; // Flag to toggle server icon updates
+let totalPixelsPlaced = 0; // Track the total number of pixels received from ssws
 
 async function setRandomProfilePicture() {
   try {
@@ -269,7 +270,7 @@ function setstatusbasedonws() {
       client.user.setPresence({
         activities: [
           {
-            name: "over Youtube Draws",
+            name: `over Youtube Draws (${totalPixelsPlaced} pixels placed)`,
             type: Discord.ActivityType.Watching,
           },
         ],
@@ -279,7 +280,7 @@ function setstatusbasedonws() {
       client.user.setPresence({
         activities: [
           {
-            name: "over Youtube Draws",
+            name: `over Youtube Draws (${totalPixelsPlaced} pixels placed)`,
             type: Discord.ActivityType.Watching,
           },
         ],
@@ -289,7 +290,7 @@ function setstatusbasedonws() {
       client.user.setPresence({
         activities: [
           {
-            name: "over Youtube Draws",
+            name: `over Youtube Draws (${totalPixelsPlaced} pixels placed)`,
             type: Discord.ActivityType.Watching,
           },
         ],
@@ -656,7 +657,10 @@ function connectSnapShotWebSocket() {
       // renderCanvas();
     } else {
       canvasState[decoded[0]][decoded[1]] = decoded[2];
-      console.log("(" + decoded[0] + "," + decoded[1] + "): " + decoded[2]);
+      totalPixelsPlaced++; // Increment the total pixels placed
+      console.log(
+        `(${decoded[0]},${decoded[1]}): ${decoded[2]} - Total Pixels: ${totalPixelsPlaced}`
+      );
     }
   });
 }
@@ -665,6 +669,9 @@ client.once(Discord.Events.ClientReady, () => {
   console.log("Connecting to WebSocket...");
   connectSnapShotWebSocket();
   console.log("WebSocket connected.");
+
+  // Update status with pixels every 10 minutes
+  setInterval(setstatusbasedonws, 10 * 60 * 1000);
 
   // Register the /toggleicon command
   const toggleIconCommand = {
