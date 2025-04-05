@@ -17,6 +17,9 @@ const client = new Discord.Client({
   intents: [Intents.Guilds, Intents.GuildMessages, Intents.MessageContent],
 });
 
+// Initialize client.commands as a Discord Collection
+client.commands = new Discord.Collection();
+
 let connectedws = 0; // amount of connected websockets
 let usernameSet = false; // Flag to track if the username has been set
 let autoUpdateIcon = true; // Flag to toggle server icon updates
