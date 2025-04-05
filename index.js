@@ -19,6 +19,7 @@ const client = new Discord.Client({
 
 let connectedws = 0; // amount of connected websockets
 let usernameSet = false; // Flag to track if the username has been set
+let autoUpdateIcon = true; // Flag to toggle server icon updates
 
 async function setRandomProfilePicture() {
   try {
@@ -47,6 +48,66 @@ async function setRandomProfilePicture() {
   }
 }
 
+async function toggleIconUpdates(interaction) {
+  if (
+    !interaction.member.permissions.has(
+      Discord.PermissionsBitField.Flags.Administrator
+    )
+  ) {
+    await interaction.reply({
+      content: "You do not have permission to use this command.",
+      ephemeral: true,
+    });
+    return;
+  }
+
+  autoUpdateIcon = !autoUpdateIcon;
+  const status = autoUpdateIcon ? "enabled" : "disabled";
+  await interaction.reply(`Auto-update server icon has been ${status}.`);
+}
+
+async function catifyIcon(interaction) {
+  if (
+    !interaction.member.permissions.has(
+      Discord.PermissionsBitField.Flags.Administrator
+    )
+  ) {
+    await interaction.reply({
+      content: "You do not have permission to use this command.",
+      ephemeral: true,
+    });
+    return;
+  }
+
+  try {
+    const pfpsPath = path.join(__dirname, "pfps");
+    const files = fs
+      .readdirSync(pfpsPath)
+      .filter((file) => file.endsWith(".png"));
+
+    if (files.length === 0) {
+      await interaction.reply("No PNG files found in the pfps folder.");
+      return;
+    }
+
+    const randomFile = files[Math.floor(Math.random() * files.length)];
+    const filePath = path.join(pfpsPath, randomFile);
+
+    const guild = interaction.guild;
+    if (!guild) {
+      await interaction.reply("This command can only be used in a server.");
+      return;
+    }
+
+    await guild.setIcon(filePath);
+    console.log(`Server icon updated to: ${randomFile}`);
+    await interaction.reply(`Server icon updated to: ${randomFile}`);
+  } catch (error) {
+    console.error("Failed to update server icon:", error);
+    await interaction.reply("Failed to update the server icon.");
+  }
+}
+
 client.on("ready", async () => {
   console.log(`Logged in as ${client.user.tag}!`);
 
@@ -65,6 +126,7 @@ client.on("ready", async () => {
 
   // Auto-update server icon every 10 minutes
   setInterval(async () => {
+    if (!autoUpdateIcon) return; // Skip if auto-update is disabled
     try {
       const iconUrl = "https://i3.ytimg.com/vi/rabTWiIdStA/maxresdefault.jpg";
       const iconPath = path.join(__dirname, "icon.jpg");
@@ -125,6 +187,18 @@ client.on(Discord.Events.InteractionCreate, async (interaction) => {
 
   if (!command) {
     console.error(`No command matching ${interaction.commandName} was found.`);
+    return;
+  }
+
+  // Handle the toggleicon command
+  if (interaction.commandName === "toggleicon") {
+    await toggleIconUpdates(interaction);
+    return;
+  }
+
+  // Handle the catifyicon command
+  if (interaction.commandName === "catifyicon") {
+    await catifyIcon(interaction);
     return;
   }
 
@@ -590,6 +664,26 @@ client.once(Discord.Events.ClientReady, () => {
   console.log("Connecting to WebSocket...");
   connectSnapShotWebSocket();
   console.log("WebSocket connected.");
+
+  // Register the /toggleicon command
+  const toggleIconCommand = {
+    data: new Discord.SlashCommandBuilder()
+      .setName("toggleicon")
+      .setDescription("Toggle auto-updating the server icon every 10 minutes."),
+    execute: toggleIconUpdates,
+  };
+
+  client.commands.set(toggleIconCommand.data.name, toggleIconCommand);
+
+  // Register the /catifyicon command
+  const catifyIconCommand = {
+    data: new Discord.SlashCommandBuilder()
+      .setName("catifyicon")
+      .setDescription("Set a random cat picture as the server's icon."),
+    execute: catifyIcon,
+  };
+
+  client.commands.set(catifyIconCommand.data.name, catifyIconCommand);
 });
 
 console.log("Logging in to Discord...");
