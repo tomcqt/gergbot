@@ -25,6 +25,15 @@ let usernameSet = false; // Flag to track if the username has been set
 let autoUpdateIcon = true; // Flag to toggle server icon updates
 let totalPixelsPlaced = 0; // Track the total number of pixels received from ssws
 
+// check if the lastpixels.txt file exists, and if it does then set the totalPixelsPlaced to the number in the file
+const lastPixelsFilePath = path.join(__dirname, "lastpixels.txt");
+if (fs.existsSync(lastPixelsFilePath)) {
+  const lastPixels = fs.readFileSync(lastPixelsFilePath, "utf8");
+  totalPixelsPlaced = parseInt(lastPixels, 10);
+} else {
+  fs.writeFileSync(lastPixelsFilePath, "0", "utf8");
+}
+
 async function setRandomProfilePicture() {
   try {
     const pfpsPath = path.join(__dirname, "pfps");
@@ -300,6 +309,12 @@ function setstatusbasedonws() {
     console.log("Set status to " + connectedws);
   } catch (err) {
     console.log("Failed to set status.\n" + err);
+  }
+  // try to save the total pixels placed to the lastpixels.txt file
+  try {
+    fs.writeFileSync(lastPixelsFilePath, totalPixelsPlaced.toString(), "utf8");
+  } catch (err) {
+    console.log("Failed to save last pixels placed.\n" + err);
   }
 }
 
