@@ -2,3 +2,4 @@ icon.jpg
 *.env
 roles.json
 node_modules
+lastpixels.txt
